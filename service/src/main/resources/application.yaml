@@ -1,0 +1,31 @@
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-access-in-milli-seconds: ${JWT_ACCESS_EXPIRATION}
+  expiration-refresh-in-milli-seconds: ${JWT_REFRESH_EXPIRATION}
+
+yandex:
+  rasp:
+    api:
+      key: ${YANDEX_API_KEY}
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED}
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+
+cors:
+  origin:
+    allowed-patterns: ${CORS_ALLOWED_PATTERNS}
