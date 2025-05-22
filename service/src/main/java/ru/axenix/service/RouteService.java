@@ -299,7 +299,7 @@ public class RouteService {
                         segment instanceof SingleRouteSegment routeSegment
                         && "plane".equals(routeSegment.getThread().getTransportType())
                         || segment instanceof MultiRouteSegment multiRouteSegment
-                           && multiRouteSegment.getTransportTypes().stream().anyMatch("plane"::equals))
+                           && !multiRouteSegment.getTransportTypes().stream().allMatch("train"::equals))
                 .map(s -> {
                             if (s instanceof SingleRouteSegment segment) {
                                 return new Route()

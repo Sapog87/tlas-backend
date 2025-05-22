@@ -28,7 +28,7 @@ public class TrainUtil {
                 .build();
         filters = List.of(Filter.builder()
                 .exactFilter(ExactFilter.builder()
-                        .paramValues(List.of("b2brails", "cbdpr", "b2bbus"))
+                        .paramValues(List.of("b2brails", "cbdpr"))
                         .build())
                 .paramName("route.provider.key")
                 .build());
