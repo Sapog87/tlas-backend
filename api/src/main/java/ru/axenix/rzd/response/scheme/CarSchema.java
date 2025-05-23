@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CarSchema{
+public class CarSchema {
     @JsonProperty("CarSchemaId")
     private String carSchemaId;
     @JsonProperty("TrainNum")

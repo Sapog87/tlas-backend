@@ -53,7 +53,7 @@ public class CarGroup {
     public String availabilityIndication;
     @JsonProperty("CarDescriptions")
     public List<String> carDescriptions;
-//    @JsonProperty("ServiceClassNameRu")
+    //    @JsonProperty("ServiceClassNameRu")
 //    public Object serviceClassNameRu;
 //    @JsonProperty("ServiceClassNameEn")
 //    public Object serviceClassNameEn;
@@ -79,11 +79,11 @@ public class CarGroup {
     public boolean hasPlacesForDisabledPersons;
     @JsonProperty("HasPlacesNearBabies")
     public boolean hasPlacesNearBabies;
-//    @JsonProperty("AvailableBaggageTypes")
+    //    @JsonProperty("AvailableBaggageTypes")
 //    public List<AvailableBaggageType> availableBaggageTypes;
     @JsonProperty("HasNonRefundableTariff")
     public boolean hasNonRefundableTariff;
-//    @JsonProperty("Discounts")
+    //    @JsonProperty("Discounts")
 //    public List<Discount> discounts;
 //    @JsonProperty("AllowedTariffs")
 //    public List<Object> allowedTariffs;
@@ -105,7 +105,7 @@ public class CarGroup {
     public boolean isTransitDocumentRequired;
     @JsonProperty("IsInterstate")
     public boolean isInterstate;
-//    @JsonProperty("ClientFeeCalculation")
+    //    @JsonProperty("ClientFeeCalculation")
 //    public Object clientFeeCalculation;
 //    @JsonProperty("AgentFeeCalculation")
 //    public Object agentFeeCalculation;
@@ -117,7 +117,7 @@ public class CarGroup {
     public boolean hasPlacesForBusinessTravelBooking;
     @JsonProperty("IsCarTransportationCoaches")
     public boolean isCarTransportationCoaches;
-//    @JsonProperty("IsGroupTransportaionAvailable")
+    //    @JsonProperty("IsGroupTransportaionAvailable")
 //    public Object isGroupTransportaionAvailable;
     @JsonProperty("ServiceClassName")
     public String serviceClassName;

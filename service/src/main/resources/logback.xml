@@ -5,7 +5,8 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                %d{YYYY-MM-dd'T'HH:mm:ss.SSSZ} [%-36X{requestId}] [%-10.10thread] %highlight(%-5level) %cyan(%-50.50logger{20}) : %msg%n
+                %d{YYYY-MM-dd'T'HH:mm:ss.SSSZ} [%-36X{requestId}] [%-10.10thread] %highlight(%-5level)
+                %cyan(%-50.50logger{20}) : %msg%n
             </pattern>
         </encoder>
     </appender>

@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Segment {
-//    @JsonProperty("start_location")
+    //    @JsonProperty("start_location")
 //    private Location startLocation;
 //    @JsonProperty("finish_location")
 //    private Location finishLocation;

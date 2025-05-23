@@ -15,7 +15,7 @@ public class RailwayV1SearchTrainPricing {
     public String originStationCode;
     @JsonProperty("DestinationStationCode")
     public String destinationStationCode;
-//    @JsonProperty("ClientFeeCalculation")
+    //    @JsonProperty("ClientFeeCalculation")
 //    public Object clientFeeCalculation;
 //    @JsonProperty("AgentFeeCalculation")
 //    public Object agentFeeCalculation;

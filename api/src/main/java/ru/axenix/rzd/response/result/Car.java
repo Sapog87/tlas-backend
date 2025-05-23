@@ -54,7 +54,7 @@ public class Car {
     public LocalDateTime arrivalDateTime;
     @JsonProperty("LocalArrivalDateTime")
     public LocalDateTime localArrivalDateTime;
-//    @JsonProperty("HasNoInterchange")
+    //    @JsonProperty("HasNoInterchange")
 //    public boolean hasNoInterchange;
 //    @JsonProperty("HasPlaceNumeration")
 //    public boolean hasPlaceNumeration;

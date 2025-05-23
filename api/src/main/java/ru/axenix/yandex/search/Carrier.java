@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Carrier {
-//    @JsonProperty("code")
+    //    @JsonProperty("code")
 //    private int code;
     @JsonProperty("title")
     private String title;

@@ -297,7 +297,7 @@ public class RouteService {
         return result.getSegments().stream()
                 .filter(segment ->
                         segment instanceof SingleRouteSegment routeSegment
-                        && "plane".equals(routeSegment.getThread().getTransportType())
+                        && !"train".equals(routeSegment.getThread().getTransportType())
                         || segment instanceof MultiRouteSegment multiRouteSegment
                            && !multiRouteSegment.getTransportTypes().stream().allMatch("train"::equals))
                 .map(s -> {
@@ -315,7 +315,7 @@ public class RouteService {
                                                 .setDestinationCode(segment.getTo().getCodes().getExpress())
                                                 .setStartDateTime(segment.getDeparture())
                                                 .setFinishDateTime(segment.getArrival())
-                                                .setCarrier(getTitleFromYandex(segment.getThread().getCarrier().getTitle()))
+                                                .setCarrier(segment.getThread().getCarrier() == null ? null : getTitleFromYandex(segment.getThread().getCarrier().getTitle()))
                                                 .setProducts(List.of())
                                                 .setRaceNumber(segment.getThread().getNumber())
                                                 .setTransport(getTransport(segment.getThread().getTransportType()))
@@ -385,9 +385,23 @@ public class RouteService {
     }
 
     private static String getTitleFromYandex(String title) {
-        return StringUtils.startsWithIgnoreCase(title, "ржд/")
-                ? title.substring(4)
-                : title;
+        if (StringUtils.startsWithIgnoreCase(title, "гранд")) {
+            return "ГРАНД";
+        }
+
+        if (StringUtils.startsWithIgnoreCase(title, "ржд/")) {
+            return title.substring(4);
+        }
+
+        if (StringUtils.startsWithIgnoreCase(title, "Индивидуальный предприниматель")){
+            return title.replace("Индивидуальный предприниматель", "ИП");
+        }
+
+        if (StringUtils.startsWithIgnoreCase(title, "Общество с ограниченной ответственностью")){
+            return title.replace("Общество с ограниченной ответственностью", "ООО");
+        }
+
+        return title;
     }
 
     private static String getTitleFromRzd(String title) {

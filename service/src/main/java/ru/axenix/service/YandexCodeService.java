@@ -32,8 +32,8 @@ public class YandexCodeService {
         String rus = "йцукенгшщзхъфывапролджэячсмитьбюё";
 
         for (int i = 0; i < eng.length(); i++) {
-            engToRus.put(eng.charAt(i), rus.charAt(i));
             engToRus.put(Character.toUpperCase(eng.charAt(i)), Character.toUpperCase(rus.charAt(i)));
+            engToRus.put(eng.charAt(i), rus.charAt(i));
         }
     }
 

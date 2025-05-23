@@ -20,7 +20,7 @@ public class Trip {
     private OffsetDateTime finishDatetime;
     @JsonProperty("race_number")
     private String raceNumber;
-//    @JsonProperty("min_price")
+    //    @JsonProperty("min_price")
 //    private Price minPrice;
 //    @JsonProperty("max_price")
 //    private Price maxPrice;
