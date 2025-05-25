@@ -16,11 +16,18 @@ spring:
       password: ${REDIS_PASSWORD}
       ssl:
         enabled: ${REDIS_SSL_ENABLED}
+      timeout: 20000
+      connect-timeout: 10000
 
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+    hikari:
+      max-lifetime: 300000
+      idle-timeout: 600000
+      validation-timeout: 5000
+      connection-timeout: 10000
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml

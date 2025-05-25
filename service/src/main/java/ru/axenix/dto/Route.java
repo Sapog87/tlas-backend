@@ -10,7 +10,8 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class Route {
-    private int transfers;
+    private String key;
+    private Integer transfers;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime startDateTime;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -18,4 +19,5 @@ public class Route {
     private String startLocation;
     private String finishLocation;
     private List<Segment> segments;
+    private Boolean isSaved;
 }

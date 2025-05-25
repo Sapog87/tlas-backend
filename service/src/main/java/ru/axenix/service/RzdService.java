@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import ru.axenix.dto.ResultDto;
 import ru.axenix.exception.ParseException;
 import ru.axenix.exception.ReadException;
 import ru.axenix.exception.ResultException;
@@ -59,7 +60,8 @@ public class RzdService {
             maxAttempts = 2,
             backoff = @Backoff(delay = 100)
     )
-    public List<Result> onewayMmpRoutes(String start, String finish, LocalDate date) {
+    @Cacheable(RZD_ROUTE_MMP)
+    public List<ResultDto> onewayMmpRoutes(String start, String finish, LocalDate date) {
         log.info("Start TrainService::onewayMmpRoutes with start: {}, finish: {}, date: {}",
                 start, finish, date);
 
@@ -72,6 +74,7 @@ public class RzdService {
             maxAttempts = 2,
             backoff = @Backoff(delay = 100)
     )
+    @Cacheable(RZD_ROUTE_P)
     public RailwayV1SearchTrainPricing onewayPRoutes(String expressCodeOrigin, String expressCodeDestination, LocalDate date) {
         log.info("Start TrainService::onewayPRoutes with start: {}, expressCodeOrigin: {}, expressCodeDestination: {}",
                 expressCodeOrigin, expressCodeDestination, date);
@@ -185,7 +188,7 @@ public class RzdService {
     }
 
 
-    private List<Result> getResults(MmpRequest mmpRequest) {
+    private List<ResultDto> getResults(MmpRequest mmpRequest) {
         var body = RequestBody.create(toJson(mmpRequest), MEDIA_TYPE_APPLICATION_JSON);
         var httpRequest = new Request.Builder().url(ONEWAY_MMP_ROUTES_URL).post(body).build();
         try (var response = client.newCall(httpRequest).execute()) {
@@ -249,12 +252,17 @@ public class RzdService {
         }
     }
 
-    private List<Result> toResults(List<Response> responses) {
+    private List<ResultDto> toResults(List<Response> responses) {
         return responses.stream()
                 .filter(Result.class::isInstance)
                 .map(Result.class::cast)
                 .filter(result -> Objects.nonNull(result.getRoutes()))
-                .toList();
+                .map(result -> new ResultDto()
+                        .setLegs(result.getLegs())
+                        .setRoutes(result.getRoutes())
+                        .setMaxPrice(result.getMaxPrice())
+                        .setMinPrice(result.getMinPrice())
+                ).toList();
     }
 
     private void checkErrors(List<Response> responses) {

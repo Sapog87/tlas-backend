@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.sql.Timestamp;
 import java.util.Set;
 
 @Getter
@@ -31,10 +33,16 @@ public class User {
     @Column(unique = true, nullable = false)
     private String passwordHash;
 
+    @CreationTimestamp
+    private Timestamp createdAt;
+
     @ManyToMany
     @JoinTable(name = "user_roles")
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "user")
     private Set<SearchHistory> userSearchHistory;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Route> savedRoutes;
 }

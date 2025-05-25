@@ -77,7 +77,7 @@ public class SecurityConfig {
         for (var allowed : allowedPattern) {
             configuration.addAllowedOrigin(allowed);
         }
-        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS", "DELETE"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(false);
 

@@ -1,39 +1,37 @@
 package ru.axenix.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import ru.axenix.dto.Product;
-import ru.axenix.dto.Route;
-import ru.axenix.dto.Segment;
 import ru.axenix.dto.*;
 import ru.axenix.exception.ResultException;
 import ru.axenix.exception.YandexCodeNotFoundException;
-import ru.axenix.rzd.response.result.*;
+import ru.axenix.repository.RouteRedisRepository;
+import ru.axenix.repository.RouteRepository;
+import ru.axenix.rzd.response.result.Car;
+import ru.axenix.rzd.response.result.RailwayV1SearchCarPricing;
+import ru.axenix.rzd.response.result.RailwayV1SearchTrainPricing;
+import ru.axenix.rzd.response.result.Train;
 import ru.axenix.yandex.search.MultiRouteSegment;
 import ru.axenix.yandex.search.Response;
 import ru.axenix.yandex.search.SingleRouteSegment;
 import ru.axenix.yandex.search.Transfer;
 
+import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.groupingBy;
-import static ru.axenix.config.RedisCacheConfig.RZD_ROUTE;
-import static ru.axenix.config.RedisCacheConfig.YANDEX_ROUTE;
 import static ru.axenix.security.HttpRequestIdFilter.REQUEST_ID;
 import static ru.axenix.util.TrainUtil.getTransport;
 import static ru.axenix.util.TrainUtil.getType;
@@ -46,8 +44,10 @@ public class RouteService {
     private final YandexService yandexService;
     private final YandexCodeService yandexCodeService;
     private final SearchHistoryService searchHistoryService;
+    private final RouteRedisRepository routeRedisRepository;
+    private final RouteRepository routeRepository;
+    private final UserRouteService userRouteService;
 
-    @Cacheable(RZD_ROUTE)
     public List<Route> findOneWayRoutesRzd(String fromYandexCode, String toYandexCode, LocalDate date) {
         var rid = MDC.get(REQUEST_ID);
         var futures = List.of(
@@ -62,22 +62,71 @@ public class RouteService {
         );
 
         try {
-            var result = combineFutures(futures).get();
-            saveSearch(fromYandexCode, toYandexCode);
-            return result;
+            var routes = combineFutures(futures).get();
+            return setKeySaveSearchAndGetRoutes(fromYandexCode, toYandexCode, routes);
         } catch (Exception e) {
             throw new ResultException(e);
         }
     }
 
-    @Cacheable(YANDEX_ROUTE)
     public List<Route> findOneWayRoutesYandex(String fromYandexCode, String toYandexCode, LocalDate date) {
         var routes = findOneWayRoutesYandexInternal(fromYandexCode, toYandexCode, date);
+        return setKeySaveSearchAndGetRoutes(fromYandexCode, toYandexCode, routes);
+    }
+
+    private List<Route> setKeySaveSearchAndGetRoutes(String fromYandexCode, String toYandexCode, List<Route> routes) {
         saveSearch(fromYandexCode, toYandexCode);
+        routes.forEach(route -> {
+            var hash = hash256(route);
+            route.setKey(hash);
+        });
+        routeRedisRepository.save(routes);
+        addSaved(routes);
         return routes;
     }
 
-    public <T> CompletableFuture<List<T>> combineFutures(List<CompletableFuture<List<T>>> futures) {
+    private void addSaved(List<Route> routes) {
+        try {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (!(authentication instanceof AnonymousAuthenticationToken)) {
+                var ids = new HashSet<>(userRouteService.findSavedRoutesFromIdsOfUser(
+                        routes.stream().map(Route::getKey).toList(),
+                        authentication.getName()
+                ));
+                routes.forEach(route -> {
+                    if (ids.contains(route.getKey())) {
+                        route.setIsSaved(true);
+                    }
+                });
+            }
+        } catch (RuntimeException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    @SneakyThrows
+    private String hash256(Route route) {
+        var key = new Object[]{
+                route.getTransfers(),
+                route.getStartLocation(),
+                route.getFinishLocation(),
+                route.getStartDateTime(),
+                route.getFinishDateTime(),
+                route.getSegments().stream()
+                        .map(segment -> new Object[]{
+                                segment.getTransport(),
+                                segment.getRaceNumber(),
+                                segment.getStartDateTime(),
+                                segment.getFinishDateTime(),
+                                segment.getStartStation(),
+                                segment.getFinishStation(),
+                        }).toArray()
+        };
+        var hash = MessageDigest.getInstance("SHA-256").digest(Arrays.deepToString(key).getBytes());
+        return Base64.getEncoder().encodeToString(hash);
+    }
+
+    private <T> CompletableFuture<List<T>> combineFutures(List<CompletableFuture<List<T>>> futures) {
         List<CompletableFuture<Optional<List<T>>>> handledFutures = futures.stream()
                 .map(future -> future
                         .thenApply(Optional::of)
@@ -152,10 +201,11 @@ public class RouteService {
                 to.express(),
                 date
         );
+
         return mapToRoutes(results);
     }
 
-    private List<Route> mapToRoutes(List<Result> results) {
+    private List<Route> mapToRoutes(List<ResultDto> results) {
         return results.stream()
                 .map(result -> {
                     var leg = result.getLegs().stream()
@@ -299,7 +349,7 @@ public class RouteService {
                         segment instanceof SingleRouteSegment routeSegment
                         && !"train".equals(routeSegment.getThread().getTransportType())
                         || segment instanceof MultiRouteSegment multiRouteSegment
-                           && !multiRouteSegment.getTransportTypes().stream().allMatch("train"::equals))
+                           && !multiRouteSegment.getTransportTypes().stream().allMatch(x -> "train".equals(x) || "suburban".equals(x)))
                 .map(s -> {
                             if (s instanceof SingleRouteSegment segment) {
                                 return new Route()
@@ -384,7 +434,7 @@ public class RouteService {
                 ).toList();
     }
 
-    private static String getTitleFromYandex(String title) {
+    private String getTitleFromYandex(String title) {
         if (StringUtils.startsWithIgnoreCase(title, "гранд")) {
             return "ГРАНД";
         }
@@ -393,24 +443,24 @@ public class RouteService {
             return title.substring(4);
         }
 
-        if (StringUtils.startsWithIgnoreCase(title, "Индивидуальный предприниматель")){
+        if (StringUtils.startsWithIgnoreCase(title, "Индивидуальный предприниматель")) {
             return title.replace("Индивидуальный предприниматель", "ИП");
         }
 
-        if (StringUtils.startsWithIgnoreCase(title, "Общество с ограниченной ответственностью")){
+        if (StringUtils.startsWithIgnoreCase(title, "Общество с ограниченной ответственностью")) {
             return title.replace("Общество с ограниченной ответственностью", "ООО");
         }
 
         return title;
     }
 
-    private static String getTitleFromRzd(String title) {
+    private String getTitleFromRzd(String title) {
         return "ГРАНДТ".equals(title)
                 ? "ГРАНД"
                 : title;
     }
 
-    private static Segment getSegment(String titleNext, String titlePrev, ru.axenix.yandex.search.Route route, String originCode, String destinationCode) {
+    private Segment getSegment(String titleNext, String titlePrev, ru.axenix.yandex.search.Route route, String originCode, String destinationCode) {
         var transport = getTransport(route.getThread().getTransportType());
         var vehicle = transport == Transport.TRAIN
                 ? route.getThread().getTransportSubtype().getTitle()
@@ -423,7 +473,7 @@ public class RouteService {
                 .setDestinationCode(destinationCode)
                 .setStartDateTime(route.getDeparture())
                 .setFinishDateTime(route.getArrival())
-                .setCarrier(getTitleFromYandex(route.getThread().getCarrier().getTitle()))
+                .setCarrier(route.getThread().getCarrier() == null ? null : getTitleFromYandex(route.getThread().getCarrier().getTitle()))
                 .setProducts(List.of())
                 .setRaceNumber(route.getThread().getNumber())
                 .setTransport(transport)

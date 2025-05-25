@@ -6,6 +6,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import ru.axenix.yandex.search.Response;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import static ru.axenix.config.RedisCacheConfig.YANDEX_RESPONSE;
 
 @Slf4j
 @Service
@@ -47,6 +50,7 @@ public class YandexService {
             maxAttempts = 2,
             backoff = @Backoff(delay = 100)
     )
+    @Cacheable(YANDEX_RESPONSE)
     public Response getResult(String from, String to, LocalDate date) {
         var url = baseUrl.newBuilder()
                 .addQueryParameter("from", from)

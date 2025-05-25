@@ -3,17 +3,23 @@ package ru.axenix.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.axenix.dto.UserInfo;
-
-import java.util.Objects;
+import ru.axenix.exception.UserNotFoundException;
+import ru.axenix.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    public UserInfo info(String username) {
-        Objects.requireNonNull(username);
+    private final UserRepository userRepository;
 
-        //todo
-        return new UserInfo().setName(username);
+    public UserInfo info(String username) {
+        var user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
+        return new UserInfo()
+                .setName(user.getName())
+                .setUsername(user.getUsername())
+                .setRegistrationDate(user.getCreatedAt());
     }
 }
