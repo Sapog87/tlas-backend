@@ -351,87 +351,94 @@ public class RouteService {
                         || segment instanceof MultiRouteSegment multiRouteSegment
                            && !multiRouteSegment.getTransportTypes().stream().allMatch(x -> "train".equals(x) || "suburban".equals(x)))
                 .map(s -> {
-                            if (s instanceof SingleRouteSegment segment) {
-                                return new Route()
-                                        .setTransfers(0)
-                                        .setStartDateTime(segment.getDeparture())
-                                        .setFinishDateTime(segment.getArrival())
-                                        .setStartLocation(segment.getFrom().getTitle())
-                                        .setFinishLocation(segment.getTo().getTitle())
-                                        .setSegments(List.of(new Segment()
-                                                .setStartStation(segment.getFrom().getTitle())
-                                                .setOriginCode(segment.getFrom().getCodes().getExpress())
-                                                .setFinishStation(segment.getTo().getTitle())
-                                                .setDestinationCode(segment.getTo().getCodes().getExpress())
-                                                .setStartDateTime(segment.getDeparture())
-                                                .setFinishDateTime(segment.getArrival())
-                                                .setCarrier(segment.getThread().getCarrier() == null ? null : getTitleFromYandex(segment.getThread().getCarrier().getTitle()))
-                                                .setProducts(List.of())
-                                                .setRaceNumber(segment.getThread().getNumber())
-                                                .setTransport(getTransport(segment.getThread().getTransportType()))
-                                                .setStartCity(segment.getFrom().getTitle())
-                                                .setFinishCity(segment.getTo().getTitle()))
-                                        );
-                            }
-
-                            if (s instanceof MultiRouteSegment segment) {
-                                var details = segment.getSegments();
-                                var segments = new ArrayList<Segment>();
-                                for (int i = 0; i < details.size(); i += 2) {
-                                    if (details.get(i) instanceof ru.axenix.yandex.search.Route route) {
-                                        if (i == 0) {
-                                            if (details.get(i + 1) instanceof Transfer transferNext) {
-                                                segments.add(getSegment(
-                                                                transferNext.getTransferFrom().getTitle(),
-                                                                segment.getDepartureFrom().getTitle(),
-                                                                route,
-                                                                route.getFrom().getCodes().getExpress(),
-                                                                transferNext.getTransferFrom().getCodes().getExpress()
-                                                        )
-                                                );
-                                            }
-                                        } else if (i == details.size() - 1) {
-                                            if (details.get(i - 1) instanceof Transfer transferPrev) {
-                                                segments.add(getSegment(
-                                                                segment.getArrivalTo().getTitle(),
-                                                                transferPrev.getTransferTo().getTitle(),
-                                                                route,
-                                                                transferPrev.getTransferTo().getCodes().getExpress(),
-                                                                route.getTo().getCodes().getExpress()
-                                                        )
-                                                );
-                                            }
-                                        } else {
-                                            if (details.get(i + 1) instanceof Transfer transferNext
-                                                && details.get(i - 1) instanceof Transfer transferPrev
-                                            ) {
-                                                segments.add(getSegment(
-                                                                transferNext.getTransferFrom().getTitle(),
-                                                                transferPrev.getTransferTo().getTitle(),
-                                                                route,
-                                                                transferNext.getTransferFrom().getCodes().getExpress(),
-                                                                transferPrev.getTransferTo().getCodes().getExpress()
-                                                        )
-                                                );
-                                            }
-                                        }
-                                    } else {
-                                        throw new IllegalStateException();
-                                    }
+                            try {
+                                if (s instanceof SingleRouteSegment segment) {
+                                    return new Route()
+                                            .setTransfers(0)
+                                            .setStartDateTime(segment.getDeparture())
+                                            .setFinishDateTime(segment.getArrival())
+                                            .setStartLocation(segment.getFrom().getTitle())
+                                            .setFinishLocation(segment.getTo().getTitle())
+                                            .setSegments(List.of(new Segment()
+                                                    .setStartStation(segment.getFrom().getTitle())
+                                                    .setOriginCode(segment.getFrom().getCodes().getExpress())
+                                                    .setFinishStation(segment.getTo().getTitle())
+                                                    .setDestinationCode(segment.getTo().getCodes().getExpress())
+                                                    .setStartDateTime(segment.getDeparture())
+                                                    .setFinishDateTime(segment.getArrival())
+                                                    .setCarrier(segment.getThread().getCarrier() == null ? null : getTitleFromYandex(segment.getThread().getCarrier().getTitle()))
+                                                    .setProducts(List.of())
+                                                    .setRaceNumber(segment.getThread().getNumber())
+                                                    .setTransport(getTransport(segment.getThread().getTransportType()))
+                                                    .setStartCity(segment.getFrom().getTitle())
+                                                    .setFinishCity(segment.getTo().getTitle()))
+                                            );
                                 }
 
-                                return new Route()
-                                        .setStartDateTime(segment.getDeparture())
-                                        .setFinishDateTime(segment.getArrival())
-                                        .setStartLocation(segments.get(0).getStartStation())
-                                        .setFinishLocation(segments.get(segments.size() - 1).getFinishStation())
-                                        .setTransfers(segment.getTransportTypes().size() - 1)
-                                        .setSegments(segments);
-                            }
+                                if (s instanceof MultiRouteSegment segment) {
+                                    var details = segment.getSegments();
+                                    var segments = new ArrayList<Segment>();
+                                    for (int i = 0; i < details.size(); i += 2) {
+                                        if (details.get(i) instanceof ru.axenix.yandex.search.Route route) {
+                                            if (i == 0) {
+                                                if (details.get(i + 1) instanceof Transfer transferNext) {
+                                                    segments.add(getSegment(
+                                                                    transferNext.getTransferFrom().getTitle(),
+                                                                    segment.getDepartureFrom().getTitle(),
+                                                                    route,
+                                                                    route.getFrom().getCodes().getExpress(),
+                                                                    transferNext.getTransferFrom().getCodes().getExpress()
+                                                            )
+                                                    );
+                                                }
+                                            } else if (i == details.size() - 1) {
+                                                if (details.get(i - 1) instanceof Transfer transferPrev) {
+                                                    segments.add(getSegment(
+                                                                    segment.getArrivalTo().getTitle(),
+                                                                    transferPrev.getTransferTo().getTitle(),
+                                                                    route,
+                                                                    transferPrev.getTransferTo().getCodes().getExpress(),
+                                                                    route.getTo().getCodes().getExpress()
+                                                            )
+                                                    );
+                                                }
+                                            } else {
+                                                if (details.get(i + 1) instanceof Transfer transferNext
+                                                    && details.get(i - 1) instanceof Transfer transferPrev
+                                                ) {
+                                                    segments.add(getSegment(
+                                                                    transferNext.getTransferFrom().getTitle(),
+                                                                    transferPrev.getTransferTo().getTitle(),
+                                                                    route,
+                                                                    transferNext.getTransferFrom().getCodes().getExpress(),
+                                                                    transferPrev.getTransferTo().getCodes().getExpress()
+                                                            )
+                                                    );
+                                                }
+                                            }
+                                        } else {
+                                            throw new IllegalStateException();
+                                        }
+                                    }
 
-                            throw new IllegalStateException();
+                                    return new Route()
+                                            .setStartDateTime(segment.getDeparture())
+                                            .setFinishDateTime(segment.getArrival())
+                                            .setStartLocation(segments.get(0).getStartStation())
+                                            .setFinishLocation(segments.get(segments.size() - 1).getFinishStation())
+                                            .setTransfers(segment.getTransportTypes().size() - 1)
+                                            .setSegments(segments);
+                                }
+
+                                throw new IllegalStateException();
+                            } catch (Exception e) {
+                                log.warn(e.getMessage(), e);
+                                return null;
+                            }
                         }
-                ).toList();
+                )
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private String getTitleFromYandex(String title) {
